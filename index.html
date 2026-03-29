@@ -448,4 +448,83 @@ function drawPlayer(){
  ctx.lineTo(player.x+35, player.y+70);
  ctx.stroke();
 }
+         // 🔥 AUTO PLAYER UPGRADE (NO EDIT NEEDED)
+
+(function(){
+
+  function drawUpgrade(){
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    if(typeof player === "undefined") return;
+
+    // HEAD
+    ctx.fillStyle="#ffcc80";
+    ctx.beginPath();
+    ctx.arc(player.x+25, player.y-10, 15, 0, Math.PI*2);
+    ctx.fill();
+
+    // HAIR
+    ctx.fillStyle="black";
+    ctx.fillRect(player.x+10, player.y-25, 30, 10);
+
+    // EYES
+    ctx.fillStyle="black";
+    ctx.fillRect(player.x+18, player.y-12, 4, 4);
+    ctx.fillRect(player.x+30, player.y-12, 4, 4);
+
+    // HANDS
+    ctx.strokeStyle="#ffcc80";
+    ctx.lineWidth=5;
+
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y+20);
+    ctx.lineTo(player.x-15, player.y+30);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(player.x+50, player.y+20);
+    ctx.lineTo(player.x+65, player.y+30);
+    ctx.stroke();
+
+    // LEGS
+    ctx.strokeStyle="#000";
+    ctx.lineWidth=6;
+
+    ctx.beginPath();
+    ctx.moveTo(player.x+15, player.y+50);
+    ctx.lineTo(player.x+10, player.y+70);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(player.x+35, player.y+50);
+    ctx.lineTo(player.x+40, player.y+70);
+    ctx.stroke();
+  }
+
+  // 🎮 AUTO DRAW LOOP HOOK
+  function loopUpgrade(){
+    drawUpgrade();
+    requestAnimationFrame(loopUpgrade);
+  }
+
+  loopUpgrade();
+
+})();
+
+
+// 📱 AUTO 720px MOBILE FIX
+(function(){
+  function fixCanvas(){
+    const maxWidth = 720;
+    const canvas = document.getElementById("game");
+
+    let width = Math.min(window.innerWidth, maxWidth);
+    canvas.style.width = width + "px";
+    canvas.width = width;
+  }
+
+  fixCanvas();
+  window.addEventListener("resize", fixCanvas);
+})();
          

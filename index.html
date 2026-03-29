@@ -2,15 +2,14 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jungle Adventure Game</title>
+<title>Jungle Pro Game</title>
 
 <style>
 body {
   margin:0;
   overflow:hidden;
-  background: linear-gradient(#0f2027, #203a43, #2c5364);
+  background:#0b1d13;
 }
-
 canvas { display:block; }
 
 .controls {
@@ -56,33 +55,41 @@ let player={
  dx:0,dy:0,
  gravity:0.8,
  jump:-14,
- jumps:0
+ jumps:0,
+ health:100
 };
 
-let bullets=[];
-let enemies=[];
-let coins=[];
-let birds=[];
-let dragon;
+let bullets=[], coins=[], birds=[];
+let dragon={x:600,y:150,dx:3};
 let score=0;
 
-// create enemies
-for(let i=0;i<5;i++){
- enemies.push({x:400*i+400,y:300});
-}
-
-// coins
-for(let i=0;i<5;i++){
+// COINS
+for(let i=0;i<6;i++){
  coins.push({x:300*i+200,y:200});
 }
 
-// birds
+// BIRDS
 for(let i=0;i<6;i++){
  birds.push({x:Math.random()*canvas.width,y:Math.random()*200});
 }
 
-// dragon
-dragon={x:800,y:150,dx:2};
+// DRAW GROUND + TREES 🌴
+function drawJungle(){
+ // ground
+ ctx.fillStyle="#1b5e20";
+ ctx.fillRect(0,canvas.height-40,canvas.width,40);
+
+ // trees
+ for(let i=0;i<canvas.width;i+=150){
+   ctx.fillStyle="#3e2723";
+   ctx.fillRect(i+20,canvas.height-120,20,80);
+
+   ctx.fillStyle="#2e7d32";
+   ctx.beginPath();
+   ctx.arc(i+30,canvas.height-130,40,0,Math.PI*2);
+   ctx.fill();
+ }
+}
 
 // PLAYER
 function drawPlayer(){
@@ -93,8 +100,10 @@ function drawPlayer(){
 // BIRDS 🐦
 function drawBirds(){
  ctx.fillStyle="white";
- birds.forEach(b=>{
+ birds.forEach((b,i)=>{
   b.x+=2;
+  b.y+=Math.sin(Date.now()/200+i)*0.5;
+
   if(b.x>canvas.width) b.x=0;
 
   ctx.beginPath();
@@ -103,53 +112,75 @@ function drawBirds(){
  });
 }
 
-// DRAGON 🐉
+// DRAGON 🐉 + FIRE
+let fire=[];
 function drawDragon(){
  dragon.x+=dragon.dx;
  if(dragon.x<0 || dragon.x>canvas.width-80){
    dragon.dx*=-1;
  }
 
- ctx.fillStyle="red";
+ ctx.fillStyle="darkred";
  ctx.fillRect(dragon.x,dragon.y,80,40);
 
- // eyes
- ctx.fillStyle="yellow";
- ctx.fillRect(dragon.x+60,dragon.y+10,10,10);
+ // fire shoot
+ if(Math.random()<0.02){
+   fire.push({x:dragon.x,y:dragon.y+20});
+ }
 
- // fire
- ctx.fillStyle="orange";
- ctx.fillRect(dragon.x+80,dragon.y+15,20,10);
+ fire.forEach(f=>{
+   f.x-=6;
+   ctx.fillStyle="orange";
+   ctx.fillRect(f.x,f.y,15,5);
+
+   // hit player
+   if(player.x<f.x+15 && player.x+50>f.x &&
+      player.y<f.y+5 && player.y+50>f.y){
+        player.health-=5;
+   }
+ });
 }
 
 // BULLETS
 function drawBullets(){
  ctx.fillStyle="yellow";
- bullets.forEach(b=>b.x+=10);
- bullets.forEach(b=>ctx.fillRect(b.x,b.y,10,5));
-}
+ bullets.forEach((b,i)=>{
+  b.x+=10;
+  ctx.fillRect(b.x,b.y,10,5);
 
-// ENEMIES
-function drawEnemies(){
- ctx.fillStyle="black";
- enemies.forEach(e=>ctx.fillRect(e.x,e.y,40,40));
+  // hit dragon
+  if(b.x<dragon.x+80 && b.x+10>dragon.x &&
+     b.y<dragon.y+40 && b.y+5>dragon.y){
+      score+=50;
+      dragon.x=Math.random()*canvas.width;
+      bullets.splice(i,1);
+  }
+ });
 }
 
 // COINS
 function drawCoins(){
  ctx.fillStyle="gold";
- coins.forEach(c=>{
+ coins.forEach((c,i)=>{
   ctx.beginPath();
   ctx.arc(c.x,c.y,10,0,Math.PI*2);
   ctx.fill();
+
+  if(player.x<c.x+10 && player.x+50>c.x-10 &&
+     player.y<c.y+10 && player.y+50>c.y-10){
+      score+=10;
+      coins.splice(i,1);
+  }
  });
 }
 
-// SCORE
-function drawScore(){
+// UI
+function drawUI(){
  ctx.fillStyle="white";
- ctx.font="20px Arial";
  ctx.fillText("Score: "+score,20,30);
+
+ ctx.fillStyle="red";
+ ctx.fillRect(20,50,player.health*2,10);
 }
 
 // UPDATE
@@ -164,45 +195,23 @@ function update(){
   player.jumps=0;
  }
 
- // coins
- coins = coins.filter(c=>{
-  if(player.x<c.x+10 && player.x+50>c.x-10 &&
-     player.y<c.y+10 && player.y+50>c.y-10){
-      score+=10;
-      return false;
-  }
-  return true;
- });
-
- // dragon collision
- if(player.x<dragon.x+80 && player.x+50>dragon.x &&
-    player.y<dragon.y+40 && player.y+50>dragon.y){
-     alert("🐉 Dragon caught you!\nScore: "+score);
-     location.reload();
+ if(player.health<=0){
+   alert("💀 Game Over\nScore: "+score);
+   location.reload();
  }
-
- // bullets hit dragon
- bullets.forEach((b,bi)=>{
-  if(b.x<dragon.x+80 && b.x+10>dragon.x &&
-     b.y<dragon.y+40 && b.y+5>dragon.y){
-      score+=50;
-      dragon.x=Math.random()*canvas.width;
-      bullets.splice(bi,1);
-  }
- });
 }
 
 // DRAW
 function draw(){
  ctx.clearRect(0,0,canvas.width,canvas.height);
 
+ drawJungle();
  drawBirds();
  drawCoins();
  drawPlayer();
- drawEnemies();
  drawDragon();
  drawBullets();
- drawScore();
+ drawUI();
 }
 
 // LOOP
@@ -232,3 +241,134 @@ loop();
 
 </body>
 </html>
+<title>Jungle Adventure Pro Game</title>
+
+<meta name="description" content="Play jungle adventure game with dragon, birds and survival gameplay">
+<meta name="keywords" content="jungle game, adventure game, dragon game, online game">
+
+<style>
+body {
+  margin:0;
+  overflow:hidden;
+  background:#0b1d13;
+  font-family:Arial;
+}
+
+canvas { display:block; }
+
+.controls {
+  position:fixed;
+  bottom:10px;
+  width:100%;
+  text-align:center;
+}
+
+button {
+  padding:12px;
+  font-size:18px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  background:#2e7d32;
+  color:white;
+}
+</style>
+function drawJungle(){
+ ctx.fillStyle="#1b5e20";
+ ctx.fillRect(0,canvas.height-40,canvas.width,40);
+
+ for(let i=0;i<canvas.width;i+=150){
+   ctx.fillStyle="#3e2723";
+   ctx.fillRect(i+20,canvas.height-120,20,80);
+
+   ctx.fillStyle="#2e7d32";
+   ctx.beginPath();
+   ctx.arc(i+30,canvas.height-130,40,0,Math.PI*2);
+   ctx.fill();
+ }
+}
+                function drawBirds(){
+ ctx.fillStyle="white";
+ birds.forEach((b,i)=>{
+  b.x+=2;
+  b.y+=Math.sin(Date.now()/200+i)*0.5;
+
+  if(b.x>canvas.width) b.x=0;
+
+  ctx.beginPath();
+  ctx.arc(b.x,b.y,5,0,Math.PI*2);
+  ctx.fill();
+ });
+}
+   let fire=[];
+
+function drawDragon(){
+ dragon.x+=dragon.dx;
+
+ if(dragon.x<0 || dragon.x>canvas.width-80){
+   dragon.dx*=-1;
+ }
+
+ ctx.fillStyle="darkred";
+ ctx.fillRect(dragon.x,dragon.y,80,40);
+
+ // eyes
+ ctx.fillStyle="yellow";
+ ctx.fillRect(dragon.x+60,dragon.y+10,10,10);
+
+ // fire attack
+ if(Math.random()<0.02){
+   fire.push({x:dragon.x,y:dragon.y+20});
+ }
+
+ fire.forEach((f,i)=>{
+   f.x-=6;
+
+   ctx.fillStyle="orange";
+   ctx.fillRect(f.x,f.y,15,5);
+
+   // collision
+   if(player.x<f.x+15 && player.x+50>f.x &&
+      player.y<f.y+5 && player.y+50>f.y){
+        player.health-=5;
+   }
+ });
+}
+        health:100
+        function drawHealth(){
+ ctx.fillStyle="red";
+ ctx.fillRect(20,50,player.health*2,10);
+}
+        function drawBullets(){
+ ctx.fillStyle="yellow";
+ bullets.forEach((b,i)=>{
+  b.x+=10;
+
+  ctx.fillRect(b.x,b.y,10,5);
+
+  // hit dragon
+  if(b.x<dragon.x+80 && b.x+10>dragon.x &&
+     b.y<dragon.y+40 && b.y+5>dragon.y){
+      score+=50;
+      dragon.x=Math.random()*canvas.width;
+      bullets.splice(i,1);
+  }
+ });
+}
+       function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ drawJungle();
+ drawBirds();
+ drawCoins();
+ drawPlayer();
+ drawDragon();
+ drawBullets();
+ drawHealth();
+ drawScore();
+}
+       if(player.health<=0){
+ alert("💀 Game Over\nScore: "+score);
+ location.reload();
+}
+         

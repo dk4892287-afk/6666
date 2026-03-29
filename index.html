@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jungle Adventure Game</title>
+
+<style>
+body {
+  margin:0;
+  overflow:hidden;
+  background: linear-gradient(#0f2027, #203a43, #2c5364);
+}
+
+canvas { display:block; }
+
+.controls {
+  position:fixed;
+  bottom:10px;
+  width:100%;
+  text-align:center;
+}
+
+button {
+  padding:10px;
+  font-size:16px;
+  margin:4px;
+  border:none;
+  border-radius:8px;
+  background:#1b5e20;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="game"></canvas>
+
+<div class="controls">
+  <button onclick="left()">⬅️</button>
+  <button onclick="jump()">⬆️</button>
+  <button onclick="right()">➡️</button>
+  <button onclick="shoot()">🔫</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+// PLAYER
+let player={
+ x:100,y:300,w:50,h:50,
+ dx:0,dy:0,
+ gravity:0.8,
+ jump:-14,
+ jumps:0
+};
+
+let bullets=[];
+let enemies=[];
+let coins=[];
+let birds=[];
+let dragon;
+let score=0;
+
+// create enemies
+for(let i=0;i<5;i++){
+ enemies.push({x:400*i+400,y:300});
+}
+
+// coins
+for(let i=0;i<5;i++){
+ coins.push({x:300*i+200,y:200});
+}
+
+// birds
+for(let i=0;i<6;i++){
+ birds.push({x:Math.random()*canvas.width,y:Math.random()*200});
+}
+
+// dragon
+dragon={x:800,y:150,dx:2};
+
+// PLAYER
+function drawPlayer(){
+ ctx.fillStyle="orange";
+ ctx.fillRect(player.x,player.y,player.w,player.h);
+}
+
+// BIRDS 🐦
+function drawBirds(){
+ ctx.fillStyle="white";
+ birds.forEach(b=>{
+  b.x+=2;
+  if(b.x>canvas.width) b.x=0;
+
+  ctx.beginPath();
+  ctx.arc(b.x,b.y,5,0,Math.PI*2);
+  ctx.fill();
+ });
+}
+
+// DRAGON 🐉
+function drawDragon(){
+ dragon.x+=dragon.dx;
+ if(dragon.x<0 || dragon.x>canvas.width-80){
+   dragon.dx*=-1;
+ }
+
+ ctx.fillStyle="red";
+ ctx.fillRect(dragon.x,dragon.y,80,40);
+
+ // eyes
+ ctx.fillStyle="yellow";
+ ctx.fillRect(dragon.x+60,dragon.y+10,10,10);
+
+ // fire
+ ctx.fillStyle="orange";
+ ctx.fillRect(dragon.x+80,dragon.y+15,20,10);
+}
+
+// BULLETS
+function drawBullets(){
+ ctx.fillStyle="yellow";
+ bullets.forEach(b=>b.x+=10);
+ bullets.forEach(b=>ctx.fillRect(b.x,b.y,10,5));
+}
+
+// ENEMIES
+function drawEnemies(){
+ ctx.fillStyle="black";
+ enemies.forEach(e=>ctx.fillRect(e.x,e.y,40,40));
+}
+
+// COINS
+function drawCoins(){
+ ctx.fillStyle="gold";
+ coins.forEach(c=>{
+  ctx.beginPath();
+  ctx.arc(c.x,c.y,10,0,Math.PI*2);
+  ctx.fill();
+ });
+}
+
+// SCORE
+function drawScore(){
+ ctx.fillStyle="white";
+ ctx.font="20px Arial";
+ ctx.fillText("Score: "+score,20,30);
+}
+
+// UPDATE
+function update(){
+ player.dy+=player.gravity;
+ player.y+=player.dy;
+ player.x+=player.dx;
+
+ if(player.y>canvas.height-60){
+  player.y=canvas.height-60;
+  player.dy=0;
+  player.jumps=0;
+ }
+
+ // coins
+ coins = coins.filter(c=>{
+  if(player.x<c.x+10 && player.x+50>c.x-10 &&
+     player.y<c.y+10 && player.y+50>c.y-10){
+      score+=10;
+      return false;
+  }
+  return true;
+ });
+
+ // dragon collision
+ if(player.x<dragon.x+80 && player.x+50>dragon.x &&
+    player.y<dragon.y+40 && player.y+50>dragon.y){
+     alert("🐉 Dragon caught you!\nScore: "+score);
+     location.reload();
+ }
+
+ // bullets hit dragon
+ bullets.forEach((b,bi)=>{
+  if(b.x<dragon.x+80 && b.x+10>dragon.x &&
+     b.y<dragon.y+40 && b.y+5>dragon.y){
+      score+=50;
+      dragon.x=Math.random()*canvas.width;
+      bullets.splice(bi,1);
+  }
+ });
+}
+
+// DRAW
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ drawBirds();
+ drawCoins();
+ drawPlayer();
+ drawEnemies();
+ drawDragon();
+ drawBullets();
+ drawScore();
+}
+
+// LOOP
+function loop(){
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+
+// CONTROLS
+function left(){player.dx=-5; setTimeout(()=>player.dx=0,200);}
+function right(){player.dx=5; setTimeout(()=>player.dx=0,200);}
+
+function jump(){
+ if(player.jumps<2){
+  player.dy=player.jump;
+  player.jumps++;
+ }
+}
+
+function shoot(){
+ bullets.push({x:player.x+50,y:player.y+20});
+}
+
+loop();
+</script>
+
+</body>
+</html>

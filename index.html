@@ -371,4 +371,34 @@ function drawDragon(){
  alert("💀 Game Over\nScore: "+score);
  location.reload();
 }
+         // 📱 AUTO MOBILE SIZE FIX (720px max)
+(function(){
+  function fixCanvas(){
+    const maxWidth = 720;
+
+    // canvas ko responsive banao
+    let width = Math.min(window.innerWidth, maxWidth);
+    let height = window.innerHeight;
+
+    const canvas = document.getElementById("game");
+
+    // CSS scaling (important)
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    // actual resolution maintain
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  // run on load
+  fixCanvas();
+
+  // run on resize
+  window.addEventListener("resize", fixCanvas);
+})();
+         loop();
+         loop();
+
+// 👇 YAHAN PASTE KARO
          
